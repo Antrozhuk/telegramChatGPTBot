@@ -1,6 +1,7 @@
 import datetime
-import logging
 import openai
+
+from src.logger import Logger
 
 
 class OpenAIHelper:
@@ -15,6 +16,7 @@ class OpenAIHelper:
         """
         openai.api_key = config['api_key']
         self.config = config
+        self.logger = Logger('openai_helper').get_logger()
         self.conversations: dict[int: list] = {}  # {chat_id: history}
         self.last_updated: dict[int: datetime] = {}  # {chat_id: last_update_timestamp}
 
@@ -33,14 +35,14 @@ class OpenAIHelper:
 
             # Перевіряємо розмір історії, щоб не використовувати надлишково наш токен
             if len(self.conversations[chat_id]) > self.config['max_history_size']:
-                logging.info(f'Chat history for chat ID {chat_id} is too long. Summarising...')
+                self.logger.info(f'Chat history for chat ID {chat_id} is too long. Summarising...')
                 try:
                     summary = self.__summarise(self.conversations[chat_id])
-                    logging.debug(f'Summary: {summary}')
+                    self.logger.debug(f'Summary: {summary}')
                     self.reset_chat_history(chat_id)
                     self.__add_to_history(chat_id, role="assistant", content=summary)
                 except Exception as e:
-                    logging.warning(f'Error while summarising chat history: {str(e)}. Popping elements instead...')
+                    self.logger.warning(f'Error while summarising chat history: {str(e)}. Popping elements instead...')
                     self.conversations[chat_id] = self.conversations[chat_id][-self.config['max_history_size']:]
 
             self.__add_to_history(chat_id, role="user", content=query)
@@ -62,7 +64,7 @@ class OpenAIHelper:
                     for index, choice in enumerate(response.choices):
                         if index == 0:
                             self.__add_to_history(chat_id, role="assistant", content=choice['message']['content'])
-                        answer += f'{index+1}\u20e3\n'
+                        answer += f'{index + 1}\u20e3\n'
                         answer += choice['message']['content']
                         answer += '\n\n'
                 else:
@@ -77,19 +79,19 @@ class OpenAIHelper:
 
                 return answer
             else:
-                logging.error('No response from GPT-3')
+                self.logger.error('No response from GPT-3')
                 return "⚠️ _An error has occurred_ ⚠️\nPlease try again in a while."
 
         except openai.error.RateLimitError as e:
-            logging.exception(e)
+            self.logger.exception(e)
             return f"⚠️ _OpenAI Rate Limit exceeded_ ⚠️\n{str(e)}"
 
         except openai.error.InvalidRequestError as e:
-            logging.exception(e)
+            self.logger.exception(e)
             return f"⚠️ _OpenAI Invalid request_ ⚠️\n{str(e)}"
 
         except Exception as e:
-            logging.exception(e)
+            self.logger.exception(e)
             return f"⚠️ _An error has occurred_ ⚠️\n{str(e)}"
 
     def reset_chat_history(self, chat_id):
@@ -127,8 +129,8 @@ class OpenAIHelper:
         :return: The summary
         """
         messages = [
-            { "role": "assistant", "content": "Summarize this conversation in 700 characters or less" },
-            { "role": "user", "content": str(conversation) }
+            {"role": "assistant", "content": "Summarize this conversation in 700 characters or less"},
+            {"role": "user", "content": str(conversation)}
         ]
         response = openai.ChatCompletion.create(
             model=self.config['model'],

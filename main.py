@@ -1,14 +1,14 @@
 import logging
 import os
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-from openai_helper import OpenAIHelper
-from telegram_bot import ChatGPT3TelegramBot
+from src.openai_helper import OpenAIHelper
+from src.telegram_bot import ChatGPT3TelegramBot
 
 
 def main():
-    load_dotenv()
+    load_dotenv(find_dotenv('env/.env'))
 
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

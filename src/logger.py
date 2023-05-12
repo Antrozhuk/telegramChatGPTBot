@@ -2,12 +2,13 @@ import logging
 
 
 class Logger:
-    def __init__(self):
+    def __init__(self, name='mylog'):
         # Create a logger object
-        self.logger = logging.getLogger(__name__)
+        print(name)
+        self.logger = logging.getLogger(name)
 
         # Create a file handler and set the level to INFO
-        file_handler = logging.FileHandler('mylog.log')
+        file_handler = logging.FileHandler('logs/' + name + '.log')
         file_handler.setLevel(logging.INFO)
 
         # Create a formatter and add it to the handler
@@ -17,14 +18,5 @@ class Logger:
         # Add the handler to the logger
         self.logger.addHandler(file_handler)
 
-    def info(self, message):
-        self.logger.info(message)
-
-    def debug(self, message):
-        self.logger.debug(message)
-
-    def warning(self, message):
-        self.logger.warning(message)
-
-    def error(self, message):
-        self.logger.error(message)
+    def get_logger(self):
+        return self.logger

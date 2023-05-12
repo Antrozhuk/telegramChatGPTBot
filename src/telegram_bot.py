@@ -2,8 +2,8 @@ import telegram.constants as constants
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
-from openai_helper import OpenAIHelper
-from logger import Logger
+from src.openai_helper import OpenAIHelper
+from src.logger import Logger
 
 
 class ChatGPT3TelegramBot:
@@ -20,8 +20,19 @@ class ChatGPT3TelegramBot:
         """
         self.config = config
         self.openai = openai
-        self.logger = Logger()
+        self.logger = Logger('telegram_bot').get_logger()
         self.disallowed_message = "Вибачте, але вам не дозволено користуватись цим ботом."
+
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Показує початкове повідомлення.
+        """
+        if await self.disallowed(update, context):
+            return
+
+        await update.message.reply_text("Привіт! Я бот, який відповідає на ваші повідомлення за допомогою ChatGPT-3.\n"
+                                        "Якщо ви хочете дізнатись більше про мене, введіть /help\n\n",
+                                        disable_web_page_preview=True)
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -44,11 +55,11 @@ class ChatGPT3TelegramBot:
         if await self.disallowed(update, context):
             return
 
-        self.logger.info(f'Resetting the conversation for user {update.message.from_user}...')
+        self.logger.info(f'Resetting the conversation for {update.message.from_user}...')
 
         chat_id = update.effective_chat.id
         self.openai.reset_chat_history(chat_id=chat_id)
-        await context.bot.send_message(chat_id=chat_id, text='Done!')
+        await context.bot.send_message(chat_id=chat_id, text='Готово!')
 
     async def prompt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -145,7 +156,7 @@ class ChatGPT3TelegramBot:
         """
         application = ApplicationBuilder().token(self.config['token']).build()
 
-        application.add_handler(CommandHandler('start', self.help))
+        application.add_handler(CommandHandler('start', self.start))
 
         application.add_handler(CommandHandler('help', self.help))
 
