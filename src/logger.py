@@ -4,7 +4,6 @@ import logging
 class Logger:
     def __init__(self, name='mylog'):
         # Create a logger object
-        print(name)
         self.logger = logging.getLogger(name)
 
         # Create a file handler and set the level to INFO

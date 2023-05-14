@@ -110,7 +110,7 @@ class ChatGPT3TelegramBot:
         chat_id = update.effective_chat.id
         await context.bot.send_chat_action(chat_id=chat_id, action=constants.ChatAction.TYPING)
 
-        response = self.openai.get_chat_response(chat_id=chat_id, query='напиши рандомний пост')
+        response = self.openai.get_chat_response(chat_id=chat_id, query='напиши рандомний пост українською')
         await context.bot.send_message(
             chat_id=chat_id,
             parse_mode=constants.ParseMode.MARKDOWN,
